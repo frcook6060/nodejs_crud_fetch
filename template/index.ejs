@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <!-- Required meta tags -->
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
+        <!-- Bootstrap CSS -->
+        <link rel="stylesheet" href="/static/style/bootstrap.min.css">
+        
+        <title>CRUD Fetch</title>
+    </head>
+    <body>
+        <div class="container">
+        <h1>CRUD Fetch</h1>
+        <script type="text/javascript">
+
+            
+            function all_posts()
+            {
+                fetch('/all/posts', {
+                    method: 'GET'
+                }).then(function(response) {
+                    return response.json();
+                }).then(function(json) {
+                    var e = document.getElementById('all_post');
+                    var content = "";
+
+                    var arr = json['params'];
+
+                    for(i = 0; i < arr.length; i++)
+                    {
+                        var param = ""+arr[i]['id']+",\'view_"+arr[i]['id']+"\'";
+                        content += "<div class=\"card\" style=\"margin-bottom: 1rem; padding: 1rem;\">";
+                        content += "<div class=\"card-title\">";
+                        content += "<strong>"+arr[i]['id']+"</strong>: "+arr[i]['post'];
+                        content += "</div>";
+                        content += "<div class=\"card-text\">";
+                        content += "<a class=\"card-link\" href=\"#edit_"+arr[i]['id']+"\" onclick=\"new EditPost("+param+").click()\">Edit</a> ";
+                        content += "<a class=\"card-link\" href=\"#delete_"+arr[i]['id']+"\" onclick=\"new DeletePost("+param+").click()\">Delete</a> ";
+                        content += "</div>";
+                        content += "<div id=\"view_"+arr[i]['id']+"\"></div>";
+                        content += "</div>";
+                    }
+                    e.innerHTML = content;
+                });
+            }
+
+            function ElementClose(element)
+            {
+                this.element = element;
+            }
+
+            ElementClose.prototype.click = function(e)
+            {
+                var el = document.getElementById(this.element);
+                el.innerHTML = '';
+            }
+
+            function new_post(e)
+            {
+                var nv = document.getElementById('new_view');
+                var content = '';
+                content += "<div>";
+                content += "<div>";
+                content += "<a href=\"#exit_new_post\" onclick=\"new ElementClose('new_view').click()\">X</a>";
+                content += "</div>";
+                content += "<div><h2>New Post</h2></div>";
+                content += "<div>";
+                content += "<form action=\"#new_post_posted\">";
+                content += "<div><label for=\"id_post\">Post</label></div>";
+                content += "<div><input id=\"id_post\"></div>";
+                content += "<div><input type=\"button\" onclick=\"new_post_posted()\" value=\"New Post\"></div>";
+                content += "</form>";
+                content += "</div>";
+                content += "</div>";
+                nv.innerHTML = content;
+            }
+
+            function EditPost(id, element)
+            {
+                this.id = id;
+                this.element = element;
+            }
+
+            EditPost.prototype.click = function(e)
+            {
+                var el = document.getElementById(this.element);
+                fetch('/get/post?id='+this.id, {
+                    method: 'GET'
+                }).then(function(response) {
+                    return response.json();
+                }).then(function(json) {
+                    
+                    var obj = json['param'];
+                    var p = "\'view_" + obj['id'] + "\'";
+
+                    var content = '';
+                    content += "<div>";
+                    content += "<div>";
+                    content += "<a href=\"#exit_edit_post\" onclick=\"new ElementClose("+p+").click()\">X</a>";
+                    content += "</div>";
+                    content += "<div><h2>Edit Post \""+obj['post']+"\"</h2></div>";
+                    content += "<div>";
+                    content += "<form action=\"#edit_post_posted_"+obj['id']+"\">";
+                    content += "<input type=\'hidden\' id=\'id_id_"+obj['id']+"\' name=\'id\' value=\'"+obj['id']+"\'>"
+                    content += "<div><label for=\"id_post\">Post</label></div>";
+                    content += "<div><input id=\'id_post_"+obj['id']+"\' value=\""+obj['post'].replace(/"/g, '\"')+"\"></div>";
+                    var id_id = '\'id_id_'+obj['id']+'\'';
+                    var id_post = '\'id_post_'+obj['id']+'\'';
+                    content += "<div><input type=\"button\" onclick=\"new EditPostPosted("+id_id+", "+id_post+").click()\" value=\"Edit Post "+obj['id']+"\"></div>";
+                    content += "</form>";
+                    content += "</div>";
+                    content += "</div>";
+
+                    el.innerHTML = content;
+                });
+            }
+
+            function DeletePost(id, element)
+            {
+                this.id = id;
+                this.element = element;
+            }
+
+            DeletePost.prototype.click = function(e)
+            {
+                var el = document.getElementById(this.element);
+                fetch('/get/post?id='+this.id, {
+                    method: 'GET'
+                }).then(function(response) {
+                    return response.json();
+                }).then(function(json) {
+                    var obj = json['param'];
+                    var cls = "new DeletePostPosted("+obj['id']+", \'view_"+obj['id']+"\')";
+
+                    var content = '';
+                    content += "<div>";
+                    
+                    content += "<div>";
+                    content += "<h2>Do you want to delete \"<strong>"+obj['id']+"</strong>: "+obj['post']+"\"</h2>";
+                    content += "</div>";
+                    content += "<div>";
+                    content += "<form action=\"#\">";
+                    content += "<input type=\"hidden\" id=\""+obj['id']+"\">";
+                    content += "<input type=\"button\" value=\"Yes\" onclick=\""+cls+".click_yes()\"> | <input type=\"button\" value=\"No\" onclick=\""+cls+".click_no()\">";
+                    content += "</form>";
+                    content += "</div>";
+                    
+                    content += "</div>";
+
+                    el.innerHTML = content;
+                });
+            }
+
+            function new_post_posted(e)
+            {
+                var el = document.getElementById('id_post');
+                fetch('/new/post', {
+                    method: 'post',
+                    body: JSON.stringify({post: el.value})
+                }).then(function(response) {
+                    all_posts();
+                });
+            }
+
+            function EditPostPosted(id_id, id_post)
+            {
+                this.id_id = id_id;
+                this.id_post = id_post;
+            }
+
+            EditPostPosted.prototype.click = function(e)
+            {
+                var el_id_id = document.getElementById(this.id_id);
+                var el_id_post = document.getElementById(this.id_post);
+                fetch('/edit/post', {
+                    method: 'POST',
+                    body: JSON.stringify({id: el_id_id.value, post: el_id_post.value})
+                }).then(function(response) {
+                    all_posts();
+                })
+            }
+
+            function DeletePostPosted(id_id, element)
+            {
+                this.id_id = id_id;
+                this.close = new ElementClose(element);
+            }
+
+            DeletePostPosted.prototype.click_yes = function(e)
+            {
+                // Handle this in a minute
+                var id = this.id_id;
+                fetch('/delete/post', {
+                    method: 'POST',
+                    body: JSON.stringify({id: id})
+                }).then(function(response) {
+                    all_posts();
+                });
+            }
+
+            DeletePostPosted.prototype.click_no = function(e)
+            {
+                this.close.click(e);
+            }
+        </script>
+        <div>
+            <a href="#new" onclick="new_post()">New Post</a>
+        </div>
+        <div id="new_view"></div>
+        <div id="all_post"></div>
+        <script type="text/javascript">
+            all_posts()
+        </script>
+        </div>
+
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script type="text/javascript" src="/static/script/jquery-3.4.0.min.js"></script>
+    <script type="text/javascript" src="/static/script/popper.min.js"></script>
+    <script type="text/javascript" src="/static/script/bootstrap.min.js"></script>
+    </body>
+</html>
